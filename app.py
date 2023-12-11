@@ -4,8 +4,8 @@ import glob
 
 import plotly.express as px
 
-from src.utils import time_to_seconds, parse_seconds_to_time
-from src.preprocessing import load_select_feature, load_running
+from src.utils import seconds_to_pace
+from src.preprocessing import load_select_feature, load_running, load_cycling
 from src.questions import (
     total_activity_times,
     total_activity_distance,
@@ -20,15 +20,24 @@ from src.questions import (
     count_10k_run,
 )
 
-data_files = glob.glob("data/*.csv")
-df = load_select_feature(data_files[0])
-
 # General question
 st.title("Do you practice diligently?")
-st.header("Overview Statistic")
+st.markdown(
+    """
+    :red[The author is quite lazy about exercising. If you don't like watching, please upload your data from Garmin Activity]"""
+)
+st.image("data/garmin.png")
 
+uploaded_file = st.file_uploader("Choose see your statistic from file")
+if uploaded_file is not None:
+    df = load_select_feature(uploaded_file)
+else:
+    data_files = glob.glob("data/*.csv")
+    df = load_select_feature(data_files[0])
+
+st.header("Overview Statistic")
 # ------------------------------------------------------------------------------
-st.subheader("Time Spent", divider="rainbow")
+st.subheader("⏱️ Time Spent", divider="rainbow")
 hours, minutes, seconds = total_activity_times(df)
 col1, col2, col3 = st.columns(3)
 col1.metric(":stopwatch: Hours", f"{hours}")
@@ -36,12 +45,12 @@ col2.metric(":stopwatch: Minutes", f"{minutes}")
 col3.metric(":stopwatch: Seconds", f"{seconds}")
 
 # ------------------------------------------------------------------------------
-st.subheader("Total Distance", divider="rainbow")
+st.subheader("🏁 Total Distance", divider="rainbow")
 total_distance = total_activity_distance(df)
 st.metric("Distance", f"{total_distance} Km")
 
 # ------------------------------------------------------------------------------
-st.subheader("Mosted Activity", divider="rainbow")
+st.subheader("🏆 Mosted Activity", divider="rainbow")
 grouped_at_df, mosted_activity_type = mosted_activity(df)
 
 st.metric(
@@ -64,9 +73,9 @@ fig = px.area(grouped_time_df, x="month_year", y="distance", title="Activity by 
 st.plotly_chart(fig)
 
 # ------------------------------------------------------------------------------
-st.header("Running Statistic")
+st.header("🏃‍♂️ Running")
 running_df = load_running(df)
-tab1, tab2 = st.tabs(["📈 Overview", "🗃 Data"])
+tab1, tab2 = st.tabs(["🗃 Overview", "📈 Statistic"])
 
 with tab1:
     col1, col2, col3 = st.columns(3)
@@ -95,4 +104,71 @@ with tab1:
 
 
 with tab2:
-    st.header("")
+    running_by_month_df = activity_by_month(running_df)
+    running_by_month_df["avg_pace"] = running_by_month_df["avg_speed_seconds"].apply(
+        seconds_to_pace
+    )
+
+    fig = px.bar(
+        running_by_month_df,
+        x="month_year",
+        y="distance",
+        title="Running statistic over months",
+        color_discrete_sequence=["gray"],
+    )
+
+    line = px.line(
+        running_by_month_df, x="month_year", y=["avg_hr", "avg_cadence", "avg_pace"]
+    )
+
+    fig.add_traces(line.data)
+
+    st.plotly_chart(fig)
+
+# ------------------------------------------------------------------------------
+st.header("🚴‍♂️ Cycling")
+cycling_df = load_cycling(df)
+tab1, tab2 = st.tabs(["🗃 Overview", "📈 Statistic"])
+
+with tab1:
+    col1, col2, col3 = st.columns(3)
+
+    total_run_distance = total_activity_distance(cycling_df)
+    col1.metric("Distance", f"{total_run_distance} km")
+
+    hours, minutes, seconds = total_activity_times(cycling_df)
+    col2.metric("Time", f"{hours}:{minutes}:{seconds}")
+
+    total_run_calories = total_activity_calories(cycling_df)
+    col3.metric("Calories", f"{total_run_calories} kCal")
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric(
+        "Longest Activity Cycling", f"{longest_activity_distance(cycling_df)} km"
+    )
+    hours, minutes, seconds = longest_activity_time(cycling_df)
+    col2.metric("Longest Activity Time", f"{hours}:{minutes}:{seconds}")
+    col3.metric(
+        "Maximum Activity Calories", f"{maximum_activity_calories(cycling_df)} kCal"
+    )
+
+
+with tab2:
+    cycling_by_month_df = activity_by_month(cycling_df)
+    cycling_by_month_df = cycling_by_month_df.rename(
+        columns={"avg_speed_seconds": "avg_speed"}
+    )
+
+    fig = px.bar(
+        running_by_month_df,
+        x="month_year",
+        y="distance",
+        title="Running statistic over months",
+        color_discrete_sequence=["gray"],
+    )
+
+    hr_line = px.line(cycling_by_month_df, x="month_year", y=["avg_hr", "avg_speed"])
+
+    fig.add_traces(hr_line.data)
+
+    st.plotly_chart(fig)

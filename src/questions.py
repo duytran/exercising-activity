@@ -36,12 +36,23 @@ def activity_by_month(df: pd.DataFrame):
     """
     Want to see activity chart by month?
     """
+
+    agg_functions = {
+        "distance": "sum",
+        "calories": "sum",
+        "avg_hr": "mean",
+        "avg_cadence": "mean",
+        "avg_speed_seconds": "mean",
+        "avg_stride_length": "mean",
+        "time_seconds": "mean",
+    }
+
     df["date"] = pd.to_datetime(df["date"])
     df["month"] = df["date"].dt.month
     df["year"] = df["date"].dt.year
     df["month_year"] = df["month"].astype(str) + "-" + df["year"].astype(str)
     df["month_year"] = pd.to_datetime(df["month_year"])
-    grouped_time_df = df.groupby("month_year")["distance"].sum().reset_index()
+    grouped_time_df = df.groupby("month_year").agg(agg_functions).reset_index()
     return grouped_time_df
 
 
