@@ -13,10 +13,10 @@ SELECTED_COLUMN = [
     "Avg HR",
     "Max HR",
     "Aerobic TE",
-    "Avg Bike Cadence",
-    "Max Bike Cadence",
-    "Avg Speed",
-    "Max Speed",
+    "Avg Run Cadence",
+    "Max Run Cadence",
+    "Avg Pace",
+    "Best Pace",
     "Total Ascent",
     "Total Descent",
     "Avg Stride Length",
@@ -47,8 +47,8 @@ def load_select_feature(file: str) -> pd.DataFrame:
 
     correct_column_name = {}
     for col_name in SELECTED_COLUMN:
-        if col_name == "Avg Bike Cadence":
-            correct_column_name["Avg Bike Cadence"] = "avg_cadence"
+        if col_name == "Avg Run Cadence":
+            correct_column_name["Avg Run Cadence"] = "avg_cadence"
         else:
             correct_column_name[col_name] = col_name.replace(" ", "_").lower()
 
@@ -56,13 +56,14 @@ def load_select_feature(file: str) -> pd.DataFrame:
     df = df.rename(columns=correct_column_name)
     # replace unknow value with 0
     df = df.replace("--", 0)
+    df["calories"] = df["calories"].str.replace(",", "")
     # convert time string from hh:mm:ss to seconds
     df["time_seconds"] = df["time"].apply(time_to_seconds)
     df["moving_time_seconds"] = df["moving_time"].apply(time_to_seconds)
     df["elapsed_time_seconds"] = df["elapsed_time"].apply(time_to_seconds)
-    df["avg_speed_seconds"] = df["avg_speed"].apply(pace_to_seconds)
+    df["avg_speed_seconds"] = df["avg_pace"].apply(pace_to_seconds)
 
-    # st.write(df)
+    st.write(df)
 
     # convert to numberic feature
     df[FEATURE_NUMBER] = df[FEATURE_NUMBER].apply(pd.to_numeric)

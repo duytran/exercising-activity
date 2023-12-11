@@ -76,7 +76,7 @@ st.plotly_chart(fig)
 st.header("🏃‍♂️ Running")
 running_df = load_running(df)
 tab1, tab2 = st.tabs(["🗃 Overview", "📈 Statistic"])
-
+running_df.dropna(subset=["calories"], inplace=True)
 with tab1:
     col1, col2, col3 = st.columns(3)
 
