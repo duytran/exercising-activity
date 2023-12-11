@@ -43,6 +43,17 @@ FEATURE_NUMBER = [
 
 def load_select_feature(file: str) -> pd.DataFrame:
     df = pd.read_csv(file)
+
+    if "Avg Bike Cadence" in df.columns.tolist():
+        df = df.rename(
+            columns={
+                "Avg Bike Cadence": "Avg Run Cadence",
+                "Max Bike Cadence": "Max Run Cadence",
+                "Avg Speed": "Avg Pace",
+                "Max Speed": "Best Pace",
+            }
+        )
+
     df = df[SELECTED_COLUMN]
 
     correct_column_name = {}

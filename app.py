@@ -35,6 +35,7 @@ else:
     data_files = glob.glob("data/*.csv")
     df = load_select_feature(data_files[0])
 
+# st.stop()
 st.header("Overview Statistic")
 # ------------------------------------------------------------------------------
 st.subheader("⏱️ Time Spent", divider="rainbow")
